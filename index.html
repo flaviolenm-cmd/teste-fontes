@@ -1,0 +1,1495 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UltraCell</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.5.0/dist/svg2pdf.umd.min.js"></script>
+<script src="font-data.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Bellota:wght@400;700&family=Berkshire+Swash&family=Great+Vibes&family=Pacifico&family=Dancing+Script:wght@400;700&family=Playfair+Display:wght@400;700&family=Cinzel:wght@400;600&family=Lobster&family=Montserrat:wght@600&family=Poppins:wght@600&display=swap" rel="stylesheet">
+
+<style>
+body{
+ margin:0;
+ background:#f2f2f7;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+body > :not(script):not(.watermark-layer){
+ position:relative;
+ z-index:1;
+}
+
+.watermark-layer{
+ position:fixed;
+ inset:0;
+ z-index:0;
+ pointer-events:none;
+ overflow:hidden;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:flex-start;
+ padding:28px 0;
+ box-sizing:border-box;
+}
+
+.watermark-word{
+ width:100%;
+ text-align:center;
+ font-size:64px;
+ line-height:1;
+ font-weight:800;
+ letter-spacing:0.06em;
+ text-transform:uppercase;
+ color:rgba(17,17,17,0.035);
+ user-select:none;
+ white-space:nowrap;
+ margin:14px 0;
+}
+
+.banner{
+ background:#000;
+ color:#fff;
+ padding:25px;
+ text-align:center;
+}
+
+.search{
+ padding:10px;
+}
+
+.search input{
+ width:100%;
+ padding:14px;
+ border-radius:12px;
+ border:none;
+ background:#e5e5ea;
+ font-size:16px;
+ box-sizing:border-box;
+}
+
+.top-actions{
+ padding:10px;
+}
+
+.top-actions button{
+ width:100%;
+ padding:14px;
+ border:none;
+ border-radius:12px;
+ background:#007AFF;
+ color:#fff;
+ font-weight:600;
+}
+
+.section-title{
+ padding:10px;
+ font-weight:600;
+ opacity:0.6;
+}
+
+.notice{
+ position:fixed;
+ left:12px;
+ right:12px;
+ bottom:12px;
+ z-index:9999;
+ background:#111;
+ color:#fff;
+ border-radius:16px;
+ padding:14px 16px;
+ box-shadow:0 10px 30px rgba(0,0,0,0.22);
+ font-size:14px;
+ line-height:1.4;
+ opacity:0;
+ transform:translateY(12px);
+ pointer-events:none;
+ transition:opacity .2s ease, transform .2s ease;
+}
+
+.notice.show{
+ opacity:1;
+ transform:translateY(0);
+}
+
+.list{
+ padding:10px;
+ display:grid;
+ grid-template-columns:1fr;
+ gap:16px;
+}
+
+.item{
+ background:#fff;
+ border-radius:18px;
+ padding:16px 14px 14px;
+ box-shadow:0 4px 10px rgba(0,0,0,0.06);
+}
+
+.bottle{
+ position:relative;
+ width:100%;
+ max-width:760px;
+ aspect-ratio:820 / 220;
+ margin:0 auto 8px;
+ filter:drop-shadow(0 10px 18px rgba(0,0,0,0.10));
+}
+
+.bottle-frame{
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ display:block;
+ overflow:visible;
+ shape-rendering:geometricPrecision;
+}
+
+.bottle-shadow{
+ position:absolute;
+ left:12%;
+ right:8%;
+ bottom:6px;
+ height:16px;
+ border-radius:50%;
+ background:radial-gradient(circle, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.05) 48%, rgba(0,0,0,0) 82%);
+ pointer-events:none;
+}
+
+.bottle-preview{
+ position:absolute;
+ left:28%;
+ right:11%;
+ top:19%;
+ bottom:17%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ box-sizing:border-box;
+ padding:0 10px 0 6px;
+}
+
+.bottle-preview::before{
+ content:"";
+ position:absolute;
+ inset:18% 12% 50% 5%;
+ border-radius:999px;
+ background:linear-gradient(90deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.025) 42%, rgba(255,255,255,0) 100%);
+ opacity:0.4;
+ pointer-events:none;
+}
+
+.preview-svg{
+ width:100%;
+ height:100%;
+ display:block;
+ position:relative;
+ z-index:1;
+}
+
+.bottle-tools{
+ margin-top:8px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:10px;
+}
+
+.color-dot{
+ width:14px;
+ height:14px;
+ border-radius:50%;
+ border:2px solid #111;
+ background:#050505;
+ box-shadow:0 2px 5px rgba(0,0,0,0.18);
+ flex:0 0 auto;
+}
+
+.color-toggle{
+ padding:8px 14px;
+ border-radius:999px;
+ border:1px solid #c8ccd2;
+ background:#fff;
+ color:#111;
+ font-size:13px;
+ font-weight:700;
+ cursor:pointer;
+ transition:background .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.color-toggle:hover{
+ background:#f3f4f6;
+ border-color:#aeb4bd;
+}
+
+.color-toggle:active{
+ transform:translateY(1px);
+}
+
+.color-menu-panel{
+ display:none;
+ margin-top:12px;
+ padding:14px;
+ border-radius:16px;
+ border:1px solid #dde2e8;
+ background:#ffffff;
+ box-shadow:0 14px 32px rgba(0,0,0,0.08);
+}
+
+.item.color-menu-open .color-menu-panel{
+ display:block;
+}
+
+.color-menu-group + .color-menu-group{
+ margin-top:14px;
+ padding-top:14px;
+ border-top:1px solid #edf0f4;
+}
+
+.color-menu-title{
+ margin-bottom:10px;
+ font-size:12px;
+ font-weight:800;
+ letter-spacing:0.03em;
+ text-transform:uppercase;
+ color:#68707d;
+}
+
+.color-menu-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit, minmax(148px, 1fr));
+ gap:8px;
+}
+
+.color-option{
+ width:100%;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:10px 12px;
+ border-radius:12px;
+ border:1px solid #d6dbe2;
+ background:#ffffff;
+ color:#111111;
+ text-align:left;
+ font-size:14px;
+ font-weight:600;
+ cursor:pointer;
+ transition:border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.color-option:hover{
+ background:#f7f8fa;
+ border-color:#b9c1cc;
+}
+
+.color-option.is-selected{
+ background:#f3f4f6;
+ border-color:#111111;
+ box-shadow:inset 0 0 0 1px #111111;
+}
+
+.color-option-swatch{
+ width:18px;
+ height:18px;
+ border-radius:50%;
+ background:var(--swatch, #000000);
+ border:2px solid var(--swatch-border, #111111);
+ box-shadow:0 2px 4px rgba(0,0,0,0.12);
+ flex:0 0 auto;
+}
+
+.color-option-label{
+ display:block;
+ color:#707881;
+ background:linear-gradient(180deg, #eef1f3 0%, #aab1b8 22%, #fdfefe 42%, #7d858d 62%, #dde2e6 82%, #676f77 100%);
+ -webkit-background-clip:text;
+ background-clip:text;
+ -webkit-text-fill-color:transparent;
+}
+
+.actions{
+ margin-top:10px;
+ display:flex;
+ flex-direction:column;
+ gap:8px;
+}
+
+.font-name{
+ margin-top:10px;
+ text-align:center;
+ font-size:22px;
+ font-weight:700;
+ line-height:1.2;
+ color:#1a1a1a;
+}
+
+button.action{
+ width:100%;
+ max-width:270px;
+ margin:0 auto;
+ padding:10px 16px;
+ border:none;
+ border-radius:9px;
+ color:#fff;
+ font-size:14px;
+ font-weight:700;
+}
+
+.green{
+ background:#000000;
+}
+
+@media (max-width: 640px){
+ .watermark-word{
+  font-size:42px;
+  margin:12px 0;
+ }
+
+ .bottle{
+  max-width:none;
+ }
+
+ .bottle-preview{
+  left:30%;
+  right:10%;
+  top:20%;
+  bottom:18%;
+  padding:0 8px 0 4px;
+ }
+
+ .color-menu-grid{
+  grid-template-columns:1fr;
+ }
+}
+
+@media (min-width: 1180px){
+ .list{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+ }
+}
+</style>
+</head>
+
+<body>
+
+<div id="watermarkLayer" class="watermark-layer" aria-hidden="true"></div>
+
+<div class="banner">
+<h1>UltraCell</h1>
+</div>
+
+<div class="search">
+<input type="text" id="nameInput" placeholder="Digite o nome..." oninput="updateAll()">
+</div>
+
+<div class="top-actions">
+<button onclick="scrollToSuggestions()">✨ Ver sugestões extras</button>
+</div>
+
+<div class="section-title">🔥 14 Fontes Fixas</div>
+<div class="list" id="fixedList"></div>
+
+<div id="suggestions">
+<div class="section-title">✨ Sugestões Premium</div>
+<div class="list" id="suggestList"></div>
+</div>
+
+<div id="notice" class="notice"></div>
+
+<script>
+function slugify(value){
+ return value.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+}
+
+function createFont(config){
+ return {
+  id: slugify(config.label),
+  fallback: "sans-serif",
+  files: [],
+  isLocal: false,
+  ...config
+ };
+}
+
+const fixedFontCatalog = new Map([
+ ["Tiberias", createFont({ label:"Tiberias", cssFamily:"UC-Tiberias", files:["Tiberias.otf"], fallback:"serif", isLocal:true })],
+ ["daydream FREE", createFont({ label:"daydream FREE", cssFamily:"UC-daydream-FREE", files:["daydream FREE.ttf"], fallback:"cursive", isLocal:true })],
+ ["Thank you", createFont({ label:"Thank you", cssFamily:"UC-Thank-you", files:["Thank you.ttf"], fallback:"cursive", isLocal:true })],
+ ["hello honey", createFont({ label:"hello honey", cssFamily:"UC-hello-honey", files:["hello honey.otf"], fallback:"cursive", isLocal:true })],
+ ["Magneton Regular", createFont({ label:"Magneton Regular", cssFamily:"UC-Magneton-Regular", files:["Magneton Regular.ttf"], fallback:"sans-serif", isLocal:true })],
+ ["Autography", createFont({ label:"Autography", cssFamily:"UC-Autography", files:["Autography.otf"], fallback:"cursive", isLocal:true })],
+ ["chalala", createFont({ label:"chalala", cssFamily:"UC-chalala", files:["chalala.ttf"], fallback:"cursive", isLocal:true })],
+ ["Audiowide-Regular", createFont({ label:"Audiowide-Regular", cssFamily:"UC-Audiowide-Regular", files:["Audiowide-Regular.ttf"], fallback:"sans-serif", isLocal:true })],
+ ["Bellota-Regular", createFont({ label:"Bellota-Regular", cssFamily:"UC-Bellota-Regular", files:["Bellota-Regular.ttf"], fallback:"sans-serif", isLocal:true })],
+ ["BerkshireSwash-Regular", createFont({ label:"BerkshireSwash-Regular", cssFamily:"UC-BerkshireSwash-Regular", files:["BerkshireSwash-Regular.ttf"], fallback:"cursive", isLocal:true })],
+ ["Impact", createFont({ label:"Impact", cssFamily:"UC-Impact", files:["impact.ttf"], fallback:"sans-serif", isLocal:true })],
+ ["cattle-trail-jnl", createFont({ label:"cattle-trail-jnl", cssFamily:"UC-cattle-trail-jnl", files:["cattle-trail-jnl.otf"], fallback:"serif", isLocal:true })],
+ ["nabi-modern-font", createFont({ label:"nabi-modern-font", cssFamily:"UC-nabi-modern-font", files:["nabi-modern-font.ttf"], fallback:"sans-serif", isLocal:true })],
+ ["Nickainley-Normal", createFont({ label:"Nickainley-Normal", cssFamily:"UC-Nickainley-Normal", files:["Nickainley-Normal.otf"], fallback:"cursive", isLocal:true })]
+]);
+
+const fixedFontOrder = [
+ "Tiberias",
+ "daydream FREE",
+ "Thank you",
+ "hello honey",
+ "Magneton Regular",
+ "Autography",
+ "chalala",
+ "Audiowide-Regular",
+ "Bellota-Regular",
+ "BerkshireSwash-Regular",
+ "Impact",
+ "cattle-trail-jnl",
+ "nabi-modern-font",
+ "Nickainley-Normal"
+];
+
+const fixedFonts = fixedFontOrder
+ .map(label => fixedFontCatalog.get(label))
+ .filter(Boolean);
+
+const suggestFonts = [
+ createFont({ label:"Great Vibes", cssFamily:"Great Vibes", fallback:"cursive" }),
+ createFont({ label:"Pacifico", cssFamily:"Pacifico", fallback:"cursive" }),
+ createFont({ label:"Dancing Script", cssFamily:"Dancing Script", fallback:"cursive" }),
+ createFont({ label:"Playfair Display", cssFamily:"Playfair Display", fallback:"serif" }),
+ createFont({ label:"Cinzel", cssFamily:"Cinzel", fallback:"serif" }),
+ createFont({ label:"Lobster", cssFamily:"Lobster", fallback:"cursive" }),
+ createFont({ label:"Montserrat", cssFamily:"Montserrat", fallback:"sans-serif" }),
+ createFont({ label:"Poppins", cssFamily:"Poppins", fallback:"sans-serif" })
+];
+
+const allFonts = [...fixedFonts, ...suggestFonts];
+const fontMap = new Map(allFonts.map(font=>[font.id,font]));
+const openTypeFontCache = new Map();
+const EXPORT_WIDTH = 1280;
+const EXPORT_HEIGHT = 720;
+const PREVIEW_PATH_WIDTH_RATIO = 0.88;
+const PREVIEW_PATH_HEIGHT_RATIO = 0.66;
+const EXPORT_PATH_WIDTH_RATIO = 0.36;
+const EXPORT_PATH_HEIGHT_RATIO = 0.20;
+const WATERMARK_TEXT = "Ultracell";
+let textMeasureCanvas = null;
+
+function clampByte(value){
+ return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function hexToRgb(hex){
+ const normalized = String(hex).replace("#", "");
+ const value = normalized.length === 3
+  ? normalized.split("").map(part=>part + part).join("")
+  : normalized;
+
+ return {
+  r: parseInt(value.slice(0, 2), 16),
+  g: parseInt(value.slice(2, 4), 16),
+  b: parseInt(value.slice(4, 6), 16)
+ };
+}
+
+function rgbToHex(rgb){
+ return `#${[rgb.r, rgb.g, rgb.b]
+  .map(channel=>clampByte(channel).toString(16).padStart(2, "0"))
+  .join("")}`;
+}
+
+function mixHex(baseHex, targetHex, ratio = 0.5){
+ const base = hexToRgb(baseHex);
+ const target = hexToRgb(targetHex);
+
+ return rgbToHex({
+  r:(base.r * (1 - ratio)) + (target.r * ratio),
+  g:(base.g * (1 - ratio)) + (target.g * ratio),
+  b:(base.b * (1 - ratio)) + (target.b * ratio)
+ });
+}
+
+function createBottleTheme(config){
+ const light = Boolean(config.light);
+ const base = config.base;
+ const rgb = hexToRgb(base);
+ const brightness = ((rgb.r * 0.299) + (rgb.g * 0.587) + (rgb.b * 0.114)) / 255;
+
+ return {
+  key:config.key,
+  label:config.label,
+  light,
+  body:config.body || base,
+  rightCap:config.rightCap || mixHex(base, "#000000", light ? 0.22 : 0.16),
+  centerRing:config.centerRing || mixHex(base, "#000000", light ? 0.30 : 0.22),
+  neck:config.neck || mixHex(base, "#000000", light ? 0.18 : 0.10),
+  front:config.front || mixHex(base, "#000000", light ? 0.10 : 0.05),
+  inner:config.inner || "#ffffff",
+  highlight:config.highlight || (light ? "#111111" : "#ffffff"),
+  highlightOpacity:config.highlightOpacity || (light ? "0.05" : "0.09"),
+  previewFill:config.previewFill || (brightness >= 0.68 ? "metallic-steel-dark" : "metallic-silver"),
+  dot:config.dot || base,
+  dotBorder:config.dotBorder || (light ? mixHex(base, "#000000", 0.45) : "#111111")
+ };
+}
+
+const bottleThemes = {
+ preto:createBottleTheme({
+  key:"preto",
+  label:"Preto",
+  base:"#050505",
+  body:"#030303",
+  rightCap:"#9b9b9b",
+  centerRing:"#8c8c8c",
+  neck:"#030303",
+  front:"#050505",
+  inner:"#ffffff",
+  dot:"#050505",
+  dotBorder:"#111111"
+ }),
+ branco:createBottleTheme({
+  key:"branco",
+  label:"Branco",
+  base:"#ffffff",
+  body:"#ffffff",
+  rightCap:"#b0b0b0",
+  centerRing:"#9a9a9a",
+  neck:"#ffffff",
+  front:"#ffffff",
+  inner:"#ffffff",
+  dot:"#ffffff",
+  dotBorder:"#7a7a7a",
+  light:true
+ }),
+ areia:createBottleTheme({
+  key:"areia",
+  label:"Areia",
+  base:"#d8c2a1",
+  light:true
+ }),
+ caqui:createBottleTheme({
+  key:"caqui",
+  label:"Cáqui",
+  base:"#9b8c67"
+ }),
+ creme:createBottleTheme({
+  key:"creme",
+  label:"Creme",
+  base:"#f1e7d4",
+  light:true
+ }),
+ tiffany:createBottleTheme({
+  key:"tiffany",
+  label:"Tiffany",
+  base:"#63d7ce"
+ }),
+ petroleo:createBottleTheme({
+  key:"petroleo",
+  label:"Petróleo",
+  base:"#264c58"
+ }),
+ ceu:createBottleTheme({
+  key:"ceu",
+  label:"Céu",
+  base:"#4ea3f2"
+ }),
+ nuvem:createBottleTheme({
+  key:"nuvem",
+  label:"Nuvem",
+  base:"#dcecff",
+  light:true
+ }),
+ pistache:createBottleTheme({
+  key:"pistache",
+  label:"Pistache",
+  base:"#bfd89c",
+  light:true
+ }),
+ mirtilo:createBottleTheme({
+  key:"mirtilo",
+  label:"Mirtilo",
+  base:"#49548f"
+ }),
+ pitaya:createBottleTheme({
+  key:"pitaya",
+  label:"Pitaya",
+  base:"#df4b83"
+ }),
+ chocolate:createBottleTheme({
+  key:"chocolate",
+  label:"Chocolate",
+  base:"#4b2f22"
+ }),
+ lavanda:createBottleTheme({
+  key:"lavanda",
+  label:"Lavanda",
+  base:"#b59add",
+  light:true
+ }),
+ celeste:createBottleTheme({
+  key:"celeste",
+  label:"Celeste",
+  base:"#73d8ff",
+  light:true
+ }),
+ amarelo:createBottleTheme({
+  key:"amarelo",
+  label:"Amarelo",
+  base:"#f4d13f",
+  light:true
+ }),
+ "verde-citrus":createBottleTheme({
+  key:"verde-citrus",
+  label:"Verde Citrus",
+  base:"#80d62f"
+ }),
+ vermelho:createBottleTheme({
+  key:"vermelho",
+  label:"Vermelho",
+  base:"#c8272f"
+ }),
+ laranja:createBottleTheme({
+  key:"laranja",
+  label:"Laranja",
+  base:"#ef7b22"
+ })
+};
+
+const bottleColorGroups = [
+ {
+  title:"Cores Clássicas e Neutras",
+  colors:["preto", "branco", "areia", "caqui", "creme"]
+ },
+ {
+  title:"Tons de Azul e Verde",
+  colors:["tiffany", "petroleo", "ceu", "nuvem", "pistache", "mirtilo"]
+ },
+ {
+  title:"Tons Vibrantes e Quentes",
+  colors:["pitaya", "chocolate", "lavanda", "celeste", "amarelo", "verde-citrus", "vermelho", "laranja"]
+ }
+];
+
+function mountLocalFontFaces(){
+ return;
+}
+
+function renderWatermark(){
+ const layer = document.getElementById("watermarkLayer");
+ if(!layer){
+  return;
+ }
+
+ const approximateRowHeight = window.innerWidth <= 640 ? 66 : 92;
+ const rowCount = Math.ceil(window.innerHeight / approximateRowHeight) + 2;
+
+ layer.innerHTML = Array.from({ length:rowCount }, ()=>`
+<div class="watermark-word">${WATERMARK_TEXT}</div>`.trim()).join("");
+}
+
+function getPreviewFitConfig(text){
+ const length = Math.max(1, String(text || "").trim().length);
+
+ return {
+  widthRatio: Math.min(0.995, 0.95 + Math.max(0, length - 6) * 0.005),
+  heightRatio: length <= 8 ? 0.90 : length <= 12 ? 0.87 : length <= 18 ? 0.84 : 0.81,
+  minSize:28,
+  maxSize:320
+ };
+}
+
+function getMeasureCanvas(){
+ if(!textMeasureCanvas){
+  textMeasureCanvas = document.createElement("canvas");
+ }
+
+ return textMeasureCanvas;
+}
+
+function base64ToArrayBuffer(base64){
+ const binary = atob(base64);
+ const bytes = new Uint8Array(binary.length);
+
+ for(let i = 0; i < binary.length; i++){
+  bytes[i] = binary.charCodeAt(i);
+ }
+
+ return bytes.buffer;
+}
+
+async function getOpenTypeFont(font){
+ if(!font.isLocal || !window.opentype){
+  return null;
+ }
+
+ if(openTypeFontCache.has(font.cssFamily)){
+  return openTypeFontCache.get(font.cssFamily);
+ }
+
+ try{
+  const fontData = window.__FONT_DATA__ && window.__FONT_DATA__[font.cssFamily];
+  if(!fontData || !fontData.base64){
+   openTypeFontCache.set(font.cssFamily, null);
+   return null;
+  }
+
+  const parsedFont = window.opentype.parse(base64ToArrayBuffer(fontData.base64));
+  openTypeFontCache.set(font.cssFamily, parsedFont);
+  return parsedFont;
+ }catch(error){
+  console.error(error);
+  openTypeFontCache.set(font.cssFamily, null);
+  return null;
+ }
+}
+
+function create(){
+ fixedFonts.forEach(font=>{
+  document.getElementById("fixedList").appendChild(createItem(font));
+ });
+
+ suggestFonts.forEach(font=>{
+  document.getElementById("suggestList").appendChild(createItem(font));
+ });
+}
+
+function createItem(font){
+ const el = document.createElement("div");
+ el.className = "item";
+ el.dataset.bottleTheme = "preto";
+ const actionLabel = isAppleMobile()
+  ? "Compartilhar PDF"
+  : "Compartilhar no WhatsApp";
+
+ el.innerHTML = `
+ <div class="bottle">
+  <div class="bottle-frame-slot">
+   ${buildBottleFrame(el.dataset.bottleTheme)}
+  </div>
+  <div class="bottle-preview">
+   <div class="preview-svg" data-font-id="${font.id}"></div>
+  </div>
+  <div class="bottle-shadow"></div>
+ </div>
+
+ <div class="color-picker">
+  <div class="bottle-tools">
+   <span class="color-dot" aria-hidden="true"></span>
+   <button class="color-toggle" type="button" aria-expanded="false" onclick="toggleColorMenu(this)">Alterar cor</button>
+  </div>
+  <div class="color-menu-panel">
+   ${buildColorMenu()}
+  </div>
+ </div>
+
+ <div class="font-name">${font.label}</div>
+
+ <div class="actions">
+  <button class="action green" onclick="enviarWhats('${font.id}')">${actionLabel}</button>
+ </div>
+ `;
+
+ syncBottleTheme(el);
+ return el;
+}
+
+function getBottleTheme(theme = "preto"){
+ const aliases = {
+  black:"preto",
+  white:"branco"
+ };
+
+ const key = aliases[theme] || theme;
+ return bottleThemes[key] || bottleThemes.preto;
+}
+
+function buildColorMenu(){
+ return bottleColorGroups.map(group=>`
+<div class="color-menu-group">
+ <div class="color-menu-title">${group.title}</div>
+ <div class="color-menu-grid">
+  ${group.colors.map(colorKey=>{
+   const palette = getBottleTheme(colorKey);
+   return `
+  <button
+   class="color-option"
+   type="button"
+   data-color-key="${palette.key}"
+   aria-pressed="false"
+   onclick="selectBottleColor(this, '${palette.key}')"
+  >
+   <span class="color-option-swatch" style="--swatch:${palette.dot};--swatch-border:${palette.dotBorder};"></span>
+   <span class="color-option-label">${palette.label}</span>
+  </button>`.trim();
+  }).join("")}
+ </div>
+</div>`.trim()).join("");
+}
+
+function buildBottleFrame(theme = "preto"){
+ const palette = getBottleTheme(theme);
+ const bodyPath = "M214 2 H732 C757 2 778 22 780 47 V173 C778 198 757 218 732 218 H214 C186 218 163 170 163 110 C163 50 186 2 214 2 Z";
+ const capPath = "M732 2 H780 C801 2 818 20 818 43 V177 C818 200 801 218 780 218 H732 C754 218 771 198 771 176 V44 C771 22 754 2 732 2 Z";
+ const ringPath = "M148 22 H181 C175 45 171 76 171 110 C171 144 175 175 181 198 H148 C158 175 164 145 164 110 C164 75 158 45 148 22 Z";
+ const neckPath = "M92 22 H148 C158 45 164 75 164 110 C164 145 158 175 148 198 H92 C116 198 139 158 139 110 C139 62 116 22 92 22 Z";
+ const frontPath = "M92 22 C116 22 139 62 139 110 C139 158 116 198 92 198 H20 C10 198 2 190 2 180 V40 C2 30 10 22 20 22 Z";
+ const innerPath = "M36 40 H92 C81 58 74 84 74 110 C74 136 81 162 92 180 H36 C27 180 20 173 20 164 V56 C20 47 27 40 36 40 Z";
+ const matteId = palette.key;
+ const bodyTop = mixHex(palette.body, "#ffffff", palette.light ? 0.025 : 0.035);
+ const bodyMid = mixHex(palette.body, "#ffffff", palette.light ? 0.01 : 0.015);
+ const bodyBottom = mixHex(palette.body, "#000000", palette.light ? 0.08 : 0.12);
+ const neckTop = mixHex(palette.neck, "#ffffff", palette.light ? 0.025 : 0.03);
+ const neckBottom = mixHex(palette.neck, "#000000", palette.light ? 0.10 : 0.12);
+ const frontTop = mixHex(palette.front, "#ffffff", palette.light ? 0.02 : 0.028);
+ const frontBottom = mixHex(palette.front, "#000000", palette.light ? 0.08 : 0.10);
+ const grainWhiteOpacity = palette.light ? "0.08" : "0.05";
+ const grainDarkOpacity = palette.light ? "0.04" : "0.06";
+ const grainStrokeWhite = palette.light ? "0.045" : "0.03";
+ const grainStrokeDark = palette.light ? "0.03" : "0.04";
+
+ return `
+<svg class="bottle-frame" viewBox="0 0 820 220" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+ <defs>
+  <linearGradient id="steel-cap-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+   <stop offset="0%" stop-color="#6d747b"/>
+   <stop offset="18%" stop-color="#d9dde1"/>
+   <stop offset="36%" stop-color="#8d949b"/>
+   <stop offset="58%" stop-color="#f7f9fa"/>
+   <stop offset="78%" stop-color="#9aa1a8"/>
+   <stop offset="100%" stop-color="#5c636a"/>
+  </linearGradient>
+  <linearGradient id="steel-ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+   <stop offset="0%" stop-color="#5f666d"/>
+   <stop offset="20%" stop-color="#cfd4d9"/>
+   <stop offset="46%" stop-color="#7f878f"/>
+   <stop offset="66%" stop-color="#eef1f3"/>
+   <stop offset="84%" stop-color="#8e959d"/>
+   <stop offset="100%" stop-color="#585f66"/>
+  </linearGradient>
+  <linearGradient id="matte-body-gradient-${matteId}" x1="0%" y1="0%" x2="0%" y2="100%">
+   <stop offset="0%" stop-color="${bodyTop}"/>
+   <stop offset="45%" stop-color="${bodyMid}"/>
+   <stop offset="100%" stop-color="${bodyBottom}"/>
+  </linearGradient>
+  <linearGradient id="matte-neck-gradient-${matteId}" x1="0%" y1="0%" x2="0%" y2="100%">
+   <stop offset="0%" stop-color="${neckTop}"/>
+   <stop offset="52%" stop-color="${palette.neck}"/>
+   <stop offset="100%" stop-color="${neckBottom}"/>
+  </linearGradient>
+  <linearGradient id="matte-front-gradient-${matteId}" x1="0%" y1="0%" x2="0%" y2="100%">
+   <stop offset="0%" stop-color="${frontTop}"/>
+   <stop offset="55%" stop-color="${palette.front}"/>
+   <stop offset="100%" stop-color="${frontBottom}"/>
+  </linearGradient>
+  <pattern id="matte-grain-${matteId}" width="28" height="28" patternUnits="userSpaceOnUse">
+   <rect width="28" height="28" fill="transparent"/>
+   <circle cx="5" cy="6" r="0.8" fill="#ffffff" fill-opacity="${grainWhiteOpacity}"/>
+   <circle cx="17" cy="10" r="0.6" fill="#000000" fill-opacity="${grainDarkOpacity}"/>
+   <circle cx="10" cy="20" r="0.7" fill="#ffffff" fill-opacity="${grainWhiteOpacity}"/>
+   <circle cx="22" cy="22" r="0.65" fill="#000000" fill-opacity="${grainDarkOpacity}"/>
+   <path d="M3 14 H7" stroke="#ffffff" stroke-opacity="${grainStrokeWhite}" stroke-width="0.4" stroke-linecap="round"/>
+   <path d="M19 4 H23" stroke="#000000" stroke-opacity="${grainStrokeDark}" stroke-width="0.4" stroke-linecap="round"/>
+  </pattern>
+ </defs>
+ <g stroke="#111111" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+  <path d="${bodyPath}" fill="url(#matte-body-gradient-${matteId})"/>
+  <path d="${bodyPath}" fill="url(#matte-grain-${matteId})" opacity="0.42"/>
+  <path d="${capPath}" fill="url(#steel-cap-gradient)"/>
+  <path d="${ringPath}" fill="url(#steel-ring-gradient)"/>
+  <path d="${neckPath}" fill="url(#matte-neck-gradient-${matteId})"/>
+  <path d="${neckPath}" fill="url(#matte-grain-${matteId})" opacity="0.34"/>
+  <path d="${frontPath}" fill="url(#matte-front-gradient-${matteId})"/>
+  <path d="${frontPath}" fill="url(#matte-grain-${matteId})" opacity="0.3"/>
+  <path d="${innerPath}" fill="${palette.inner}"/>
+  <path d="M91 39 C108 39 122 71 122 110 C122 149 108 181 91 181" fill="none"/>
+  <path d="M214 2 C241 6 260 52 260 110 C260 168 241 214 214 218" fill="none"/>
+  <path d="M215 8 H724 C747 8 765 26 767 48 V172 C765 194 747 212 724 212 H215 C198 212 183 170 183 110 C183 50 198 8 215 8 Z" fill="none" stroke="${palette.highlight}" stroke-opacity="${palette.highlightOpacity}"/>
+ </g>
+</svg>`.trim();
+}
+
+function syncBottleTheme(item){
+ if(!item){
+  return;
+ }
+
+ const theme = item.dataset.bottleTheme || "preto";
+ const palette = getBottleTheme(theme);
+ const frameSlot = item.querySelector(".bottle-frame-slot");
+ const colorDot = item.querySelector(".color-dot");
+
+ if(frameSlot){
+  frameSlot.innerHTML = buildBottleFrame(theme);
+ }
+
+ if(colorDot){
+  colorDot.style.background = palette.dot;
+  colorDot.style.borderColor = palette.dotBorder;
+ }
+
+ const toggle = item.querySelector(".color-toggle");
+ if(toggle){
+  toggle.setAttribute("aria-label", `Alterar cor. Cor atual: ${palette.label}`);
+ }
+
+ item.querySelectorAll(".color-option").forEach(option=>{
+  const selected = option.dataset.colorKey === palette.key;
+  option.classList.toggle("is-selected", selected);
+  option.setAttribute("aria-pressed", selected ? "true" : "false");
+ });
+}
+
+function closeColorMenus(exceptItem = null){
+ document.querySelectorAll(".item.color-menu-open").forEach(item=>{
+  if(item !== exceptItem){
+   item.classList.remove("color-menu-open");
+   const toggle = item.querySelector(".color-toggle");
+   if(toggle){
+    toggle.setAttribute("aria-expanded", "false");
+   }
+  }
+ });
+}
+
+function toggleColorMenu(control){
+ const item = control.closest(".item");
+ if(!item){
+  return;
+ }
+
+ const isOpen = item.classList.contains("color-menu-open");
+ closeColorMenus(item);
+ item.classList.toggle("color-menu-open", !isOpen);
+ control.setAttribute("aria-expanded", isOpen ? "false" : "true");
+}
+
+async function selectBottleColor(control, theme){
+ const item = control.closest(".item");
+ if(!item){
+  return;
+ }
+
+ item.dataset.bottleTheme = theme;
+ syncBottleTheme(item);
+
+ const preview = item.querySelector(".preview-svg");
+ if(preview){
+  await drawPreviewSvg(preview);
+ }
+
+ item.classList.remove("color-menu-open");
+ const toggle = item.querySelector(".color-toggle");
+ if(toggle){
+  toggle.setAttribute("aria-expanded", "false");
+ }
+}
+
+function isCursive(font){
+ return font.toLowerCase().includes("script") ||
+        font.toLowerCase().includes("vibes") ||
+        font.toLowerCase().includes("brush") ||
+        font.toLowerCase().includes("autography") ||
+        font.toLowerCase().includes("honey") ||
+        font.toLowerCase().includes("swash") ||
+        font.toLowerCase().includes("nickainley");
+}
+
+function fitOpenTypeSize(fontObject, text, maxWidth, maxHeight, options = {}){
+ const minSize = options.minSize || 18;
+ const maxSize = options.maxSize || 280;
+ let low = minSize;
+ let high = maxSize;
+ let bestPath = fontObject.getPath(text, 0, 0, minSize, { kerning:true });
+ let bestBox = bestPath.getBoundingBox();
+ let bestSize = minSize;
+
+ while(low <= high){
+  const size = Math.floor((low + high) / 2);
+  const path = fontObject.getPath(text, 0, 0, size, { kerning:true });
+  const box = path.getBoundingBox();
+  const currentWidth = box.x2 - box.x1;
+  const currentHeight = box.y2 - box.y1;
+
+  if(currentWidth <= maxWidth && currentHeight <= maxHeight){
+   bestPath = path;
+   bestBox = box;
+   bestSize = size;
+   low = size + 1;
+  }else{
+   high = size - 1;
+  }
+ }
+
+ return { size:bestSize, box:bestBox, path:bestPath };
+}
+
+function buildOpenTypePath(fontObject, text, width, height, widthRatio = PREVIEW_PATH_WIDTH_RATIO, heightRatio = PREVIEW_PATH_HEIGHT_RATIO, options = {}){
+ const fit = fitOpenTypeSize(fontObject, text, width * widthRatio, height * heightRatio, options);
+ const x = (width / 2) - ((fit.box.x1 + fit.box.x2) / 2);
+ const y = (height / 2) - ((fit.box.y1 + fit.box.y2) / 2);
+
+ return fontObject.getPath(text, x, y, fit.size, { kerning:true });
+}
+
+function escapeXml(value){
+ return String(value)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&apos;");
+}
+
+function pathToSvgData(path){
+ return path.commands.map(command=>{
+  if(command.type === "M"){
+   return `M ${command.x} ${command.y}`;
+  }
+
+  if(command.type === "L"){
+   return `L ${command.x} ${command.y}`;
+  }
+
+  if(command.type === "C"){
+   return `C ${command.x1} ${command.y1} ${command.x2} ${command.y2} ${command.x} ${command.y}`;
+  }
+
+  if(command.type === "Q"){
+   return `Q ${command.x1} ${command.y1} ${command.x} ${command.y}`;
+  }
+
+  if(command.type === "Z"){
+   return "Z";
+  }
+
+  return "";
+ }).join(" ");
+}
+
+function fitSvgTextSize(text, fontFamily, maxWidth, maxHeight, options = {}){
+ const canvas = getMeasureCanvas();
+ const ctx = canvas.getContext("2d");
+ const minSize = options.minSize || 24;
+ const maxSize = options.maxSize || 280;
+ let low = minSize;
+ let high = maxSize;
+ let bestSize = minSize;
+
+ while(low <= high){
+  const size = Math.floor((low + high) / 2);
+  ctx.font = `600 ${size}px "${fontFamily}"`;
+  const metrics = ctx.measureText(text);
+  const measuredHeight = Math.max(
+   (metrics.actualBoundingBoxAscent || size * 0.7) + (metrics.actualBoundingBoxDescent || size * 0.25),
+   size * 0.82
+  );
+
+  if(metrics.width <= maxWidth && measuredHeight <= maxHeight){
+   bestSize = size;
+   low = size + 1;
+  }else{
+   high = size - 1;
+  }
+ }
+
+ return bestSize;
+}
+
+function buildMetallicSilverDefs(id){
+ return `
+<defs>
+ <linearGradient id="${id}" x1="0%" y1="0%" x2="0%" y2="100%">
+  <stop offset="0%" stop-color="#fdfdfd"/>
+  <stop offset="16%" stop-color="#d6d7da"/>
+  <stop offset="34%" stop-color="#ffffff"/>
+  <stop offset="52%" stop-color="#a7a9ac"/>
+  <stop offset="74%" stop-color="#eef0f2"/>
+  <stop offset="100%" stop-color="#7f8387"/>
+ </linearGradient>
+</defs>`.trim();
+}
+
+function buildMetallicSteelDarkDefs(id){
+ return `
+<defs>
+ <linearGradient id="${id}" x1="0%" y1="0%" x2="0%" y2="100%">
+  <stop offset="0%" stop-color="#f1f4f6"/>
+  <stop offset="14%" stop-color="#9aa1a8"/>
+  <stop offset="32%" stop-color="#4b5258"/>
+  <stop offset="52%" stop-color="#d7dde1"/>
+  <stop offset="72%" stop-color="#5b6269"/>
+  <stop offset="100%" stop-color="#262b30"/>
+ </linearGradient>
+</defs>`.trim();
+}
+
+function resolveSvgFill(fill){
+ if(fill === "metallic-silver"){
+  const gradientId = `metallic-silver-${Math.random().toString(36).slice(2,10)}`;
+  return {
+   fill:`url(#${gradientId})`,
+   defs:buildMetallicSilverDefs(gradientId),
+   extraAttrs:'stroke="#ffffff" stroke-opacity="0.08" stroke-width="0.8" paint-order="stroke fill"'
+  };
+ }
+
+ if(fill === "metallic-steel-dark"){
+  const gradientId = `metallic-steel-dark-${Math.random().toString(36).slice(2,10)}`;
+  return {
+   fill:`url(#${gradientId})`,
+   defs:buildMetallicSteelDarkDefs(gradientId),
+   extraAttrs:'stroke="#f7f9fa" stroke-opacity="0.24" stroke-width="1.2" paint-order="stroke fill"'
+  };
+ }
+
+ return { fill, defs:"", extraAttrs:"" };
+}
+
+async function buildSvgMarkup(font, text, width = 1600, height = 260, fill = "metallic-silver"){
+ const fillConfig = resolveSvgFill(fill);
+ const previewFit = getPreviewFitConfig(text);
+
+ if(font.isLocal){
+  const fontObject = await getOpenTypeFont(font);
+  if(fontObject){
+   return buildOutlinedSvgMarkup(
+    fontObject,
+    text,
+    width,
+    height,
+    true,
+    previewFit.widthRatio,
+    previewFit.heightRatio,
+    fill,
+    "",
+    previewFit
+   );
+  }
+ }
+
+ const fontSize = fitSvgTextSize(
+  text,
+  font.cssFamily,
+  width * previewFit.widthRatio,
+  height * previewFit.heightRatio,
+  previewFit
+ );
+ return `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">
+ ${fillConfig.defs}
+ <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="${escapeXml(font.cssFamily)}" font-size="${fontSize}" fill="${fillConfig.fill}" ${fillConfig.extraAttrs}>${escapeXml(text)}</text>
+</svg>`.trim();
+}
+
+function buildOutlinedSvgMarkup(fontObject, text, width, height, responsive = false, widthRatio = PREVIEW_PATH_WIDTH_RATIO, heightRatio = PREVIEW_PATH_HEIGHT_RATIO, fill = "#000000", defs = "", options = {}){
+ const fillConfig = resolveSvgFill(fill);
+ const path = buildOpenTypePath(fontObject, text, width, height, widthRatio, heightRatio, options);
+ const svgPath = pathToSvgData(path);
+ const sizeAttrs = responsive
+  ? `preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block"`
+  : `width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet"`;
+
+ return `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" ${sizeAttrs}>
+ ${defs || fillConfig.defs}
+ <path d="${svgPath}" fill="${fillConfig.fill}" ${fillConfig.extraAttrs}/>
+</svg>`.trim();
+}
+
+async function buildOutlinedExportSvg(font, text, width = EXPORT_WIDTH, height = EXPORT_HEIGHT){
+ if(!font.isLocal){
+  throw new Error("Essa fonte não possui arquivo local para vetorização.");
+ }
+
+ const fontObject = await getOpenTypeFont(font);
+ if(!fontObject){
+  throw new Error(`Não foi possível vetorizar a fonte ${font.label}.`);
+ }
+
+ return buildOutlinedSvgMarkup(fontObject, text, width, height, false, EXPORT_PATH_WIDTH_RATIO, EXPORT_PATH_HEIGHT_RATIO);
+}
+
+async function buildOutlinedExportPdf(font, text, width = EXPORT_WIDTH, height = EXPORT_HEIGHT){
+ if(!font.isLocal){
+  throw new Error("Essa fonte não possui arquivo local para vetorização.");
+ }
+
+ const fontObject = await getOpenTypeFont(font);
+ if(!fontObject){
+  throw new Error(`Não foi possível vetorizar a fonte ${font.label}.`);
+ }
+
+ const svgMarkup = buildOutlinedSvgMarkup(fontObject, text, width, height, false, EXPORT_PATH_WIDTH_RATIO, EXPORT_PATH_HEIGHT_RATIO);
+ const parser = new DOMParser();
+ const svgDoc = parser.parseFromString(svgMarkup, "image/svg+xml");
+ const svgElement = svgDoc.documentElement;
+
+ svgElement.setAttribute("width", String(width));
+ svgElement.setAttribute("height", String(height));
+ svgElement.style.background = "transparent";
+
+ const { jsPDF } = window.jspdf;
+ const pdf = new jsPDF({
+  orientation:"landscape",
+  unit:"px",
+  format:[width, height],
+  compress:true
+ });
+
+ if(typeof pdf.svg !== "function"){
+  throw new Error("A biblioteca de exportação PDF não carregou.");
+ }
+
+ await pdf.svg(svgElement, {
+  x:0,
+  y:0,
+  width,
+  height
+ });
+
+ return pdf.output("blob");
+}
+
+async function drawPreviewSvg(container){
+ const font = fontMap.get(container.dataset.fontId);
+ const text = getCurrentName();
+ const item = container.closest(".item");
+ const theme = item ? (item.dataset.bottleTheme || "preto") : "preto";
+ const previewFill = getBottleTheme(theme).previewFill;
+
+ if(!font){
+  return;
+ }
+
+ container.innerHTML = await buildSvgMarkup(font, text, 1400, 180, previewFill);
+}
+
+async function updateAll(){
+ const items = Array.from(document.querySelectorAll(".preview-svg"));
+ await Promise.all(items.map(drawPreviewSvg));
+}
+
+function scrollToSuggestions(){
+ document.getElementById("suggestions").scrollIntoView({
+  behavior:"smooth"
+ });
+}
+
+function getCurrentName(){
+ return document.getElementById("nameInput").value || "UltraCell";
+}
+
+async function ensureFontLoaded(font, size = 48){
+ if(font.isLocal || !document.fonts || !document.fonts.load){
+  return;
+ }
+
+ try{
+  await document.fonts.load(`${size}px "${font.cssFamily}"`);
+ }catch(error){
+  console.error(error);
+ }
+}
+
+async function isFontAvailable(font){
+ if(font.isLocal){
+  return !!(await getOpenTypeFont(font));
+ }
+
+ if(!document.fonts || !document.fonts.check){
+  return true;
+ }
+
+ return document.fonts.check(`48px "${font.cssFamily}"`);
+}
+
+function getStatusText(font, available){
+ if(available){
+  return font.isLocal ? "arquivo carregado" : "carregada";
+ }
+
+ if(font.isLocal){
+  return `não carregou: ${font.files.join(", ")}`;
+ }
+
+ return "verifique internet";
+}
+
+function downloadBlob(blob,filename){
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a");
+ a.href = url;
+ a.download = filename;
+ a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function isAppleMobile(){
+ const ua = navigator.userAgent || "";
+ const touchMac = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+ return /iPhone|iPad|iPod/i.test(ua) || touchMac;
+}
+
+function buildWhatsAppText(font, name){
+ return `Fonte escolhida: ${font.label} para o nome ${name}. PDF vetorial em curvas, pronto para abrir no Corel.`;
+}
+
+function openWhatsAppWithMessage(text){
+ window.open("https://wa.me/?text="+encodeURIComponent(text));
+}
+
+function buildShareFile(blob, fileName, mimeType){
+ return new File([blob], fileName, { type:mimeType });
+}
+
+async function shareFileOnAppleMobile(file){
+ if(!navigator.share){
+  return { ok:false, reason:"unsupported" };
+ }
+
+ const shareData = { files:[file] };
+ const canShareFiles = !navigator.canShare || navigator.canShare(shareData);
+
+ if(!canShareFiles){
+  return { ok:false, reason:"unsupported" };
+ }
+
+ try{
+  await navigator.share(shareData);
+  return { ok:true };
+ }catch(error){
+  const message = String((error && error.message) || "");
+  const isAbort = error && (error.name === "AbortError" || /abort|cancel/i.test(message));
+
+  if(isAbort){
+   return { ok:false, reason:"cancelled" };
+  }
+
+  return { ok:false, reason:"failed", error };
+ }
+}
+
+let noticeTimer = null;
+
+function showNotice(message){
+ const notice = document.getElementById("notice");
+ if(!notice){
+  return;
+ }
+
+ notice.textContent = message;
+ notice.classList.add("show");
+
+ if(noticeTimer){
+  clearTimeout(noticeTimer);
+ }
+
+ noticeTimer = setTimeout(()=>{
+  notice.classList.remove("show");
+ }, 5000);
+}
+
+async function enviarWhats(fontId){
+ try{
+  const font = fontMap.get(fontId);
+  if(!font){
+   return;
+  }
+
+  const name = getCurrentName();
+  const pdfBlob = await buildOutlinedExportPdf(font, name, EXPORT_WIDTH, EXPORT_HEIGHT);
+  const fileName = `${name} - ${font.label}.pdf`;
+  const pdfFile = buildShareFile(pdfBlob, fileName, "application/pdf");
+  const text = buildWhatsAppText(font, name);
+
+  if(isAppleMobile()){
+   const result = await shareFileOnAppleMobile(pdfFile);
+
+   if(result.ok){
+    return;
+   }
+
+   if(result.reason === "cancelled"){
+    return;
+   }
+
+   downloadBlob(pdfBlob, fileName);
+   showNotice("O iPhone não compartilhou o arquivo direto. O PDF foi baixado para anexar manualmente no WhatsApp.");
+   return;
+  }
+
+  if(navigator.share){
+   const shareData = {
+    title:`${name} - ${font.label}`,
+    text,
+    files:[pdfFile]
+   };
+
+   const canShareFiles = !navigator.canShare || navigator.canShare(shareData);
+
+   if(canShareFiles){
+    try{
+     await navigator.share(shareData);
+     return;
+    }catch(error){
+     const message = String((error && error.message) || "");
+     const isAbort = error && (error.name === "AbortError" || /abort|cancel/i.test(message));
+     const isFileIssue = error && (error.name === "NotAllowedError" || error.name === "TypeError");
+
+     if(isAbort){
+      return;
+     }
+
+     if(isFileIssue){
+      downloadBlob(pdfBlob, fileName);
+      showNotice("O arquivo PDF foi baixado. Agora anexe no WhatsApp como documento.");
+      openWhatsAppWithMessage(`${text} O PDF foi baixado para você anexar no WhatsApp.`);
+      return;
+     }
+
+     throw error;
+    }
+   }
+  }
+
+  downloadBlob(pdfBlob, fileName);
+  showNotice("O arquivo PDF foi baixado. Agora anexe no WhatsApp como documento.");
+  openWhatsAppWithMessage(`${text} O PDF foi baixado para você anexar no WhatsApp.`);
+ }catch(error){
+  console.error(error);
+  alert(error && error.message ? error.message : "Não foi possível preparar o PDF vetorial para compartilhamento no WhatsApp.");
+ }
+}
+
+window.onload = async ()=>{
+ mountLocalFontFaces();
+ renderWatermark();
+ create();
+
+ await Promise.all(allFonts.map(font=>ensureFontLoaded(font)));
+
+ await updateAll();
+};
+
+document.addEventListener("click", event=>{
+ if(!event.target.closest(".color-picker")){
+  closeColorMenus();
+ }
+});
+
+document.addEventListener("keydown", event=>{
+ if(event.key === "Escape"){
+  closeColorMenus();
+ }
+});
+
+window.addEventListener("resize", ()=>{
+ renderWatermark();
+ updateAll();
+});
+</script>
+
+</body>
+</html>
